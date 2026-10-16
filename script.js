@@ -331,7 +331,7 @@ dataInput?.addEventListener('change', preencherHorasDisponiveis);
 // ===== Conexão compartilhada com o painel =====
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js';
+import { createBookingClient } from './booking-spark.js';
 const firebaseConfig = {
   apiKey: "AIzaSyBTXqQuzZkzHnQVfiyb4gvSi9xkB5eAeLg",
   authDomain: "ws-barber-5a702.firebaseapp.com",
@@ -342,16 +342,15 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const callable = httpsCallable(getFunctions(app, 'southamerica-east1'), 'bookingApi');
 let sessionReady;
-async function bookingCall(data) {
+async function ensureSession() {
   if (!sessionReady) sessionReady = (async () => {
     await auth.authStateReady();
     if (!auth.currentUser) await signInAnonymously(auth);
   })().catch(error => { sessionReady = null; throw error; });
   await sessionReady;
-  return (await callable(data)).data;
 }
+const bookingCall = createBookingClient(app, auth, ensureSession);
 // Adaptadores somente para os documentos públicos de configuração.
 const db = null;
 const doc = (_db, ...parts) => ({ path: parts.join('/'), id: parts.at(-1) });
